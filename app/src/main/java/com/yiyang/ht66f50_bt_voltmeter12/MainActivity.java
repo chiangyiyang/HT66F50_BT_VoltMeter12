@@ -36,6 +36,9 @@ public class MainActivity extends AppCompatActivity {
     private BluetoothAdapter btAdapter;
     private Set<BluetoothDevice> pairedDevices;
     private String[] deviceList;
+    private TextView tvValue;
+    private TextView tvVolt;
+
     private ConnectedThread connectedThread;
 
     private Handler mHandler = new Handler() {
@@ -49,8 +52,12 @@ public class MainActivity extends AppCompatActivity {
             }
         }
     };
-    private TextView tvValue;
-    private TextView tvVolt;
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        connectedThread.cancel();
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -217,6 +224,10 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     int v = mmInStream.read();
                     v += mmInStream.read() * 256;
+                    if (v > 4095 || v <= 0) {
+                        mmInStream.read();
+                        continue;
+                    }
                     mHandler.obtainMessage(BT_MESSAGE_READ, v, -1, null).sendToTarget();
                 } catch (IOException e) {
                     break;
